@@ -3,6 +3,7 @@ import { Response } from "express";
 import { zodExceptionHandler } from "../adaptors/validator.js";
 import { PassauthException } from "passauth";
 import { PassauthEmailPluginException } from "@passauth/email-plugin/exceptions";
+
 export const errorHandler = (
   error: any,
   res: Response,

@@ -9,7 +9,7 @@ import {
 } from "sequelize-typescript";
 import { PassauthConfiguration } from "passauth";
 import { EmailPluginOptions } from "@passauth/email-plugin";
-import { PassauthExpress } from "../../src/index.js";
+import { AuthMiddleware, PassauthExpress } from "../../src/index.js";
 import type { UserRole } from "../../src/interfaces/user.types";
 import { EmailClientTest } from "./EmailClient";
 
@@ -129,12 +129,17 @@ export const setupApp = async () => {
     repo: emailRepo,
   } as EmailPluginOptions;
 
-  const { router } = PassauthExpress(app, {
+  const { setupRoutes, passauth } = PassauthExpress({
     config,
     emailConfig,
   });
 
+  const router = setupRoutes();
+
   app.use("/auth", router);
+  app.get("/is-logged", AuthMiddleware(passauth), (req, res) => {
+    res.send({ message: "ok" });
+  });
 
   return {
     app,

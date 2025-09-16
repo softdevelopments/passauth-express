@@ -859,10 +859,10 @@
   dependencies:
     "@noble/hashes" "^1.1.5"
 
-"@passauth/email-plugin@^1.0.12":
-  version "1.0.12"
-  resolved "https://registry.yarnpkg.com/@passauth/email-plugin/-/email-plugin-1.0.12.tgz#3a3ba4df3dd543f5c6035c4a4e1b7025cf783f67"
-  integrity sha512-2ULpKFCdxIZw5VXjIySHKgW0T5IHTGbCzSmYMbKVTwU38wTyIUIl9xgyo1b0AMo4x1hh79tvzWUV3hMnVNCD/w==
+"@passauth/email-plugin@^1.0.13":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@passauth/email-plugin/-/email-plugin-1.0.13.tgz#860160838a150b9dbb7d3605f3257e567405a7f2"
+  integrity sha512-1+I6J1FF/6SSEj8fTo8Wt0QDknGJf1Nbm/u1Ul9P/iH0wfrMp0S2psRJQHUEMqfac9umha07RytfFNeKMhiy+w==
   dependencies:
     bcrypt "^6.0.0"
     jest "^30.1.1"
@@ -3004,10 +3004,10 @@ parseurl@^1.3.3:
   resolved "https://registry.yarnpkg.com/parseurl/-/parseurl-1.3.3.tgz#9da19e7bee8d12dff0513ed5b76957793bc2e8d4"
   integrity sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==
 
-passauth@^1.0.10:
-  version "1.0.10"
-  resolved "https://registry.yarnpkg.com/passauth/-/passauth-1.0.10.tgz#7aae93d034938756c9279f4789ef5981fe653724"
-  integrity sha512-VnvY6bjRNaARUgDsXCB0HzpH6Cvt03SnMsdW1Z0sIoBQehUdBUgC7V0MdxLyLUX150BhM5Bdccn9pBaPg/aeIw==
+passauth@^1.0.11:
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/passauth/-/passauth-1.0.11.tgz#817b59a83f92533bfcd9fa724eb9a327d7fba4ef"
+  integrity sha512-RE2hmBVy+qjOVAQuggsFO3b8QvuSZGZZUcxJYlycKRieq8i4dJI/MoAvY4X3C+/qOgGjccEmGW1uGX7XuN3w0w==
   dependencies:
     bcrypt "^6.0.0"
     jsonwebtoken "^9.0.2"

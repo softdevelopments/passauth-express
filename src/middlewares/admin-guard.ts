@@ -11,11 +11,27 @@ export const AdminGuard =
 
       const decodedToken = handler.verifyAccessToken<JwtPayload>(token || "");
 
-      if (!decodedToken || decodedToken.role !== "admin") {
+      if (!decodedToken || decodedToken.data?.role !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }
 
       next();
+    } catch (error) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+  };
+
+export const AuthMiddleware =
+  (handler: AuthHandler<User>) =>
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const isAuthorized = handler.verifyAccessToken(
+        req.headers.authorization?.split(" ")[1] || ""
+      );
+
+      if (isAuthorized) {
+        return next();
+      }
     } catch (error) {
       return res.status(401).json({ message: "Unauthorized" });
     }

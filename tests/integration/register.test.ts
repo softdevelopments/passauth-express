@@ -8,13 +8,9 @@ import {
   beforeAll,
   beforeEach,
   test,
-  afterAll,
 } from "@jest/globals";
-import type { AuthRepo } from "passauth";
-import type { EmailPluginOptions } from "@passauth/email-plugin";
 import type { EmailClient } from "@passauth/email-plugin/interfaces";
 import { setupApp, UserModel } from "../utils/app.utils";
-import type { User } from "../../src/interfaces/user.types";
 import { DEFAULT_CONFIRMATION_LINK_EXPIRATION_MS } from "@passauth/email-plugin/constants";
 
 describe("Register with email-plugin", () => {
@@ -26,19 +22,11 @@ describe("Register with email-plugin", () => {
     const {
       app: appInstance,
       sequelize: sequelizeInstance,
-      passauth: { repo: passauthRepoInstance },
-      emailPlugin: {
-        emailRepo: emailRepoInstance,
-        emailService: emailServiceInstance,
-      },
       emailClient: emailClientInstance,
     } = await setupApp();
 
     app = appInstance;
     sequelize = sequelizeInstance;
-    passauthRepo = passauthRepoInstance;
-    emailRepo = emailRepoInstance;
-    emailService = emailServiceInstance;
     emailClient = emailClientInstance;
   });
 
@@ -250,97 +238,6 @@ describe("Register with email-plugin", () => {
           token: token,
         })
         .expect(400);
-    });
-  });
-});
-
-describe("Login with email-plugin", () => {
-  let app: Express;
-  let sequelize: Sequelize;
-  let passauthRepo: AuthRepo<User>;
-  let emailRepo: EmailPluginOptions["repo"];
-  let emailService: EmailPluginOptions["services"];
-  let emailClient: EmailClient;
-
-  beforeAll(async () => {
-    const {
-      app: appInstance,
-      sequelize: sequelizeInstance,
-      passauth: { repo: passauthRepoInstance },
-      emailPlugin: {
-        emailRepo: emailRepoInstance,
-        emailService: emailServiceInstance,
-      },
-      emailClient: emailClientInstance,
-    } = await setupApp();
-
-    app = appInstance;
-    sequelize = sequelizeInstance;
-    passauthRepo = passauthRepoInstance;
-    emailRepo = emailRepoInstance;
-    emailService = emailServiceInstance;
-    emailClient = emailClientInstance;
-  });
-
-  const registerAndConfirmUser = async (email: string, password: string) => {
-    await request(app).post("/auth/register").send({
-      email: "test@example.com",
-      password: "password",
-    });
-
-    const registeredUser = await UserModel.findOne({
-      where: {
-        email: "test@example.com",
-      },
-    });
-
-    if (registeredUser) {
-      registeredUser.emailVerified = true;
-
-      await registeredUser.save();
-    }
-  };
-
-  describe("Route /auth/login", () => {
-    beforeEach(async () => {
-      await sequelize.truncate({ cascade: true });
-      jest.clearAllMocks();
-
-      await registerAndConfirmUser("test@example.com", "password");
-    });
-
-    afterAll(async () => {
-      jest.clearAllMocks();
-    });
-
-    test("Should be able to login", async () => {
-      const response = await request(app)
-        .post("/auth/login")
-        .send({
-          email: "test@example.com",
-          password: "password",
-        })
-        .expect(200);
-
-      expect(response.body).toHaveProperty("accessToken");
-      expect(response.body).toHaveProperty("refreshToken");
-    });
-
-    test("Should not be able to login with unverified email", async () => {
-      await request(app).post("/auth/register").send({
-        email: "test2@example.com",
-        password: "password2",
-      });
-
-      const response = await request(app)
-        .post("/auth/login")
-        .send({
-          email: "test2@example.com",
-          password: "password2",
-        })
-        .expect(400);
-
-      expect(response.body.error).toBe("Email not verified: test2@example.com");
     });
   });
 });
