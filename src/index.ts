@@ -1,10 +1,16 @@
 import { Router } from "express";
-import { AuthHandler, Passauth, PassauthInvalidUserException } from "passauth";
-import type { PassauthConfiguration } from "passauth/auth/interfaces";
-import type { EmailPluginOptions } from "@passauth/email-plugin/interfaces";
-import { type EmailSender } from "@passauth/email-plugin/handlers";
-import { EmailSenderPlugin } from "@passauth/email-plugin";
-import { EMAIL_SENDER_PLUGIN } from "@passauth/email-plugin/constants";
+import {
+  AuthHandler,
+  Passauth,
+  PassauthInvalidUserException,
+  type PassauthConfiguration,
+} from "passauth";
+import {
+  EmailSenderPlugin,
+  EMAIL_SENDER_PLUGIN,
+  type EmailPluginOptions,
+  type EmailSender,
+} from "@passauth/email-plugin";
 import {
   ConfirmResetPasswordValidator,
   LoginValidator,

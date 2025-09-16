@@ -859,10 +859,10 @@
   dependencies:
     "@noble/hashes" "^1.1.5"
 
-"@passauth/email-plugin@^1.0.13":
-  version "1.0.13"
-  resolved "https://registry.yarnpkg.com/@passauth/email-plugin/-/email-plugin-1.0.13.tgz#860160838a150b9dbb7d3605f3257e567405a7f2"
-  integrity sha512-1+I6J1FF/6SSEj8fTo8Wt0QDknGJf1Nbm/u1Ul9P/iH0wfrMp0S2psRJQHUEMqfac9umha07RytfFNeKMhiy+w==
+"@passauth/email-plugin@^1.0.14":
+  version "1.0.14"
+  resolved "https://registry.yarnpkg.com/@passauth/email-plugin/-/email-plugin-1.0.14.tgz#70f7521d807f5d459be395a250a3304675b95022"
+  integrity sha512-WaT6P9GFBNpj9d2W61kL43PMVQd2vifXNs47jLg00uUxVzjXINgIQ+zm1htnLIr2DwmO1PgO4mfDM7xvAJ+t6A==
   dependencies:
     bcrypt "^6.0.0"
     jest "^30.1.1"
