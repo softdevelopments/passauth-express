@@ -1,5 +1,5 @@
 {
-  "name": "passauth-express",
+  "name": "@passauth/express",
   "version": "1.0.0",
   "description": "",
   "type": "module",
@@ -22,35 +22,41 @@
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --forceExit",
     "build": "tsc",
-    "dev": "tsx watch src/index.ts"
+    "postbuild": "tsc-esm-fix",
+    "dev": "tsx watch src/index.ts",
+    "prepare": "tsc && tsc-esm-fix"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@jest/globals": "^30.0.5",
+    "@passauth/email-plugin": "^1.0.16",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.0",
     "@types/supertest": "^6.0.3",
     "express": "^5.1.0",
+    "ioredis": "^5.7.0",
     "jest": "^30.0.5",
+    "passauth": "^1.0.13",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "sequelize": "^6.37.7",
     "sequelize-typescript": "^2.1.6",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.1",
+    "tsc-esm-fix": "^3.1.2",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2"
   },
   "dependencies": {
     "@mui/material": "^7.3.2",
-    "@passauth/email-plugin": "^1.0.14",
-    "passauth": "^1.0.11",
     "zod": "^4.1.8"
   },
   "peerDependencies": {
-    "express": "^5.1.0"
+    "@passauth/email-plugin": "^1.0.16",
+    "express": "^5.1.0",
+    "passauth": "^1.0.13"
   }
 }

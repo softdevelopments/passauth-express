@@ -100,6 +100,7 @@ const setupRoutes =
       try {
         const data = LoginValidator.parse(req.body);
 
+
         const handler =
           passauth.plugins?.[EMAIL_SENDER_PLUGIN]?.handler || passauth.handler;
 

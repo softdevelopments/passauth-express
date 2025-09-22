@@ -1,4 +1,5 @@
 import express from "express";
+import Redis from 'ioredis';
 import {
   Column,
   DataType,
@@ -7,11 +8,17 @@ import {
   Sequelize,
   Table,
 } from "sequelize-typescript";
-import { PassauthConfiguration } from "passauth";
+import { AuthRepo, PassauthConfiguration } from "passauth";
 import { EmailPluginOptions } from "@passauth/email-plugin";
 import { AuthMiddleware, PassauthExpress } from "../../src/index.js";
 import type { UserRole } from "../../src/interfaces/user.types";
 import { EmailClientTest } from "./EmailClient";
+
+const redisClient = new Redis({
+  host: 'redis',
+  port: 6379,
+});
+
 
 @Table
 class User extends Model {
@@ -66,7 +73,19 @@ export const setupApp = async () => {
 
       return newUser;
     },
-  };
+    saveCachedToken: async (userId, token, expiresInMs) => {
+      await redisClient.set(`auth-token:${userId}`, token, "PX", expiresInMs);
+    },
+    getCachedToken: async (userId) => {
+      const token = await redisClient.get(`auth-token:${userId}`);
+
+      return token;
+    },
+    deleteCachedToken: async (userId) => {
+      await redisClient.del(`auth-token:${userId}`);
+    }
+
+  } as AuthRepo<User>;
 
   const config = {
     secretKey: "secret-key",
