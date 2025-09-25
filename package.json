@@ -24,6 +24,7 @@
     "build": "tsc",
     "postbuild": "tsc-esm-fix",
     "dev": "tsx watch src/index.ts",
+    "lint": "eslint --fix && prettier --write .",
     "prepublishOnly": "tsc && tsc-esm-fix"
   },
   "keywords": [],
@@ -31,15 +32,19 @@
   "license": "ISC",
   "devDependencies": {
     "@jest/globals": "^30.0.5",
+    "@passauth/email-plugin": "^1.0.20",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.0",
     "@types/supertest": "^6.0.3",
+    "eslint": "^9.36.0",
     "express": "^5.1.0",
     "ioredis": "^5.7.0",
     "jest": "^30.0.5",
-    "passauth": "^1.0.19",
+    "jiti": "^2.6.0",
+    "passauth": "^1.0.23",
     "pg": "^8.16.3",
+    "prettier": "^3.6.2",
     "reflect-metadata": "^0.2.2",
     "sequelize": "^6.37.7",
     "sequelize-typescript": "^2.1.6",
@@ -47,15 +52,16 @@
     "ts-jest": "^29.4.1",
     "tsc-esm-fix": "^3.1.2",
     "tsx": "^4.20.4",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.1"
   },
   "dependencies": {
     "@mui/material": "^7.3.2",
     "zod": "^4.1.8"
   },
   "peerDependencies": {
-    "@passauth/email-plugin": "^1.0.19",
+    "@passauth/email-plugin": "^1.0.20",
     "express": "^5.1.0",
-    "passauth": "^1.0.19"
+    "passauth": "^1.0.23"
   }
 }

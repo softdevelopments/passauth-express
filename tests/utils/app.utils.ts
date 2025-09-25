@@ -1,5 +1,5 @@
 import express from "express";
-import Redis from 'ioredis';
+import Redis from "ioredis";
 import {
   Column,
   DataType,
@@ -10,15 +10,14 @@ import {
 } from "sequelize-typescript";
 import { AuthRepo, PassauthConfiguration } from "passauth";
 import { EmailPluginOptions } from "@passauth/email-plugin";
-import { AuthMiddleware, PassauthExpress } from "../../src/index.js";
+import { AuthMiddleware, PassauthExpress } from "../../src/index";
 import type { UserRole } from "../../src/interfaces/user.types";
 import { EmailClientTest } from "./EmailClient";
 
 const redisClient = new Redis({
-  host: 'redis',
+  host: "redis",
   port: 6379,
 });
-
 
 @Table
 class User extends Model {
@@ -83,8 +82,7 @@ export const setupApp = async () => {
     },
     deleteCachedToken: async (userId) => {
       await redisClient.del(`auth-token:${userId}`);
-    }
-
+    },
   } as AuthRepo<User>;
 
   const config = {
@@ -109,7 +107,7 @@ export const setupApp = async () => {
         await user.save();
 
         return true;
-      } catch (error) {
+      } catch (_error) {
         return false;
       }
     },
@@ -126,7 +124,7 @@ export const setupApp = async () => {
         await user.save();
 
         return true;
-      } catch (error) {
+      } catch (_error) {
         return false;
       }
     },

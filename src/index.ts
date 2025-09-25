@@ -1,6 +1,5 @@
 import { Router } from "express";
 import {
-  AuthHandler,
   Passauth,
   PassauthHandler,
   PassauthInvalidUserException,
@@ -10,7 +9,6 @@ import {
   EmailPluginOptions,
   EmailSenderHandler,
   EmailSenderPlugin,
-  PassauthWithEmailSenderPlugin,
   UserPluginEmailSender,
 } from "@passauth/email-plugin";
 import {
@@ -40,8 +38,8 @@ export type PassauthExpressConfig = {
 
 const setupRoutes =
   (
-    passauth: PassauthWithEmailSenderPlugin<User> | PassauthHandler<User>,
-    withEmailPlugin: boolean
+    passauth: EmailSenderHandler<User> | PassauthHandler<User>,
+    withEmailPlugin: boolean,
   ) =>
   () => {
     const router = Router();
@@ -64,9 +62,9 @@ const setupRoutes =
         try {
           const data = SendEmailConfirmationValidator.parse(req.query);
 
-          await (
-            passauth as PassauthWithEmailSenderPlugin<User>
-          ).sendConfirmPasswordEmail(data.email);
+          await (passauth as EmailSenderHandler<User>).sendConfirmPasswordEmail(
+            data.email,
+          );
 
           res.status(200).json({ message: "Confirmation email sent" });
         } catch (error) {
@@ -79,12 +77,8 @@ const setupRoutes =
           const data = ConfirmEmailValidator.parse(req.body);
 
           const result = await (
-            passauth as PassauthWithEmailSenderPlugin<User>
+            passauth as EmailSenderHandler<User>
           ).confirmEmail(data.email, data.token);
-
-          if (!result.success) {
-            return res.status(400).json({ message: "Failed to confirm email" });
-          }
 
           res.json(result);
         } catch (error) {
@@ -99,7 +93,7 @@ const setupRoutes =
       try {
         const data = LoginValidator.parse(req.body);
 
-        const result = await passauth.login<User>(data, ["role"]);
+        const result = await passauth.login(data, ["role"]);
 
         res.json(result);
       } catch (error) {
@@ -110,7 +104,7 @@ const setupRoutes =
     router.post("/refresh-token", async (req, res) => {
       try {
         const { accessToken, refreshToken } = RefreshTokenValidator.parse(
-          req.body
+          req.body,
         );
 
         const result = await passauth.refreshToken(accessToken, refreshToken);
@@ -143,7 +137,7 @@ const setupRoutes =
         } catch (error) {
           errorHandler(error, res, "Failed to revoke refresh token");
         }
-      }
+      },
     );
 
     // Reset Password Routes
@@ -154,7 +148,7 @@ const setupRoutes =
           const { email } = ResetPasswordValidator.parse(req.query);
 
           const { success, error } = await (
-            passauth as PassauthWithEmailSenderPlugin<User>
+            passauth as EmailSenderHandler<User>
           ).sendResetPasswordEmail(email);
 
           if (error) {
@@ -177,7 +171,7 @@ const setupRoutes =
           const data = ConfirmResetPasswordValidator.parse(req.body);
 
           const result = await (
-            passauth as PassauthWithEmailSenderPlugin<User>
+            passauth as EmailSenderHandler<User>
           ).confirmResetPassword(data.email, data.token, data.password);
 
           res.json(result);
@@ -193,22 +187,26 @@ const setupRoutes =
 export const PassauthExpress = (config: PassauthExpressConfig) => {
   const { config: passauthConfig, emailConfig } = config;
 
-  let passauth: any;
+  let passauthHandler: EmailSenderHandler<User> | PassauthHandler<User>;
 
   if (emailConfig) {
-    passauth = Passauth({
+    const passauth = Passauth({
       ...passauthConfig,
       plugins: [EmailSenderPlugin(emailConfig)] as const,
     });
+    passauthHandler = passauth.handler as EmailSenderHandler<User>;
   } else {
-    passauth = Passauth({
+    const passauth = Passauth({
       ...passauthConfig,
       plugins: [],
     });
+    passauthHandler = passauth.handler as PassauthHandler<User>;
   }
 
   return {
-    setupRoutes: setupRoutes(passauth.handler, !!emailConfig),
-    passauth: passauth.handler as PassauthWithEmailSenderPlugin<User>,
+    setupRoutes: setupRoutes(passauthHandler, !!emailConfig),
+    passauth: passauthHandler as
+      | EmailSenderHandler<User>
+      | PassauthHandler<User>,
   };
 };

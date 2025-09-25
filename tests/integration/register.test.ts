@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import request from "supertest";
 import { Sequelize } from "sequelize";
 import { Express } from "express";
@@ -47,16 +48,16 @@ describe("Register with email-plugin", () => {
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty(
         "message",
-        "Registration successful"
+        "Registration successful",
       );
 
       expect(emailSpy).toHaveBeenCalled();
       expect(emailSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           text: expect.stringMatching(
-            /Confirm your email test@example.com by clicking on the following link: http:\/\/passauth-express.com\/confirm-email\?email=test@example.com&token=[\w-]+/
+            /Confirm your email test@example.com by clicking on the following link: http:\/\/passauth-express.com\/confirm-email\?email=test@example.com&token=[\w-]+/,
           ),
-        })
+        }),
       );
     });
 
@@ -90,7 +91,7 @@ describe("Register with email-plugin", () => {
         .expect(201);
 
       const token = (emailSpy.mock.calls[0][0] as any).text.match(
-        /token=([\w-]+)/
+        /token=([\w-]+)/,
       )[1];
 
       const registeredUser = await UserModel.findOne({
@@ -139,15 +140,15 @@ describe("Register with email-plugin", () => {
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty(
         "message",
-        "Confirmation email sent"
+        "Confirmation email sent",
       );
       expect(emailSpy).toHaveBeenCalled();
       expect(emailSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           text: expect.stringMatching(
-            /Confirm your email test@example.com by clicking on the following link: http:\/\/passauth-express.com\/confirm-email\?email=test@example.com&token=[\w-]+/
+            /Confirm your email test@example.com by clicking on the following link: http:\/\/passauth-express.com\/confirm-email\?email=test@example.com&token=[\w-]+/,
           ),
-        })
+        }),
       );
     });
 
@@ -163,7 +164,7 @@ describe("Register with email-plugin", () => {
         .expect(201);
 
       const registerToken = (emailSpy.mock.calls[0][0] as any).text.match(
-        /token=([\w-]+)/
+        /token=([\w-]+)/,
       )[1];
 
       await request(app)
@@ -174,7 +175,7 @@ describe("Register with email-plugin", () => {
         .expect(200);
 
       const sendEmailToken = (emailSpy.mock.calls[1][0] as any).text.match(
-        /token=([\w-]+)/
+        /token=([\w-]+)/,
       )[1];
 
       expect(registerToken).not.toBe(sendEmailToken);
@@ -226,7 +227,7 @@ describe("Register with email-plugin", () => {
         .expect(201);
 
       const token = (emailSpy.mock.calls[0][0] as any).text.match(
-        /token=([\w-]+)/
+        /token=([\w-]+)/,
       )[1];
 
       jest.advanceTimersByTime(DEFAULT_CONFIRMATION_LINK_EXPIRATION_MS + 1000);

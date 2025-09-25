@@ -5,9 +5,10 @@ import { PassauthException } from "passauth";
 import { PassauthEmailPluginException } from "@passauth/email-plugin/exceptions";
 
 export const errorHandler = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error: any,
   res: Response,
-  defaultErrorMessage: string
+  defaultErrorMessage: string,
 ) => {
   if (error instanceof z.ZodError) {
     zodExceptionHandler(error, res);
