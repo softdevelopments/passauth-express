@@ -2,14 +2,16 @@ import { Router } from "express";
 import {
   AuthHandler,
   Passauth,
+  PassauthHandler,
   PassauthInvalidUserException,
   type PassauthConfiguration,
 } from "passauth";
 import {
+  EmailPluginOptions,
+  EmailSenderHandler,
   EmailSenderPlugin,
-  EMAIL_SENDER_PLUGIN,
-  type EmailPluginOptions,
-  type EmailSender,
+  PassauthWithEmailSenderPlugin,
+  UserPluginEmailSender,
 } from "@passauth/email-plugin";
 import {
   ConfirmResetPasswordValidator,
@@ -29,19 +31,19 @@ import { AdminGuard } from "./middlewares/admin-guard";
 export { AdminGuard, AuthMiddleware } from "./middlewares/admin-guard";
 
 export type PassauthExpressConfig = {
-  config: Omit<PassauthConfiguration<User>, "plugins">;
+  config: PassauthConfiguration<
+    UserPluginEmailSender,
+    [ReturnType<typeof EmailSenderPlugin>]
+  >;
   emailConfig: EmailPluginOptions;
 };
 
-type PassauthInstance = {
-  handler: AuthHandler<User>;
-  plugins: {
-    [EMAIL_SENDER_PLUGIN]?: { handler: EmailSender };
-  };
-};
-
 const setupRoutes =
-  (passauth: PassauthInstance, withEmailPlugin: boolean) => () => {
+  (
+    passauth: PassauthWithEmailSenderPlugin<User> | PassauthHandler<User>,
+    withEmailPlugin: boolean
+  ) =>
+  () => {
     const router = Router();
 
     // Register Routes
@@ -49,10 +51,7 @@ const setupRoutes =
       try {
         const data = RegisterValidator.parse(req.body);
 
-        const handler =
-          passauth.plugins?.[EMAIL_SENDER_PLUGIN]?.handler || passauth.handler;
-
-        await handler.register(data);
+        await passauth.register(data);
 
         res.status(201).json({ message: "Registration successful" });
       } catch (error) {
@@ -65,9 +64,9 @@ const setupRoutes =
         try {
           const data = SendEmailConfirmationValidator.parse(req.query);
 
-          const handler = passauth.plugins?.[EMAIL_SENDER_PLUGIN]?.handler!;
-
-          await handler.sendConfirmPasswordEmail(data.email);
+          await (
+            passauth as PassauthWithEmailSenderPlugin<User>
+          ).sendConfirmPasswordEmail(data.email);
 
           res.status(200).json({ message: "Confirmation email sent" });
         } catch (error) {
@@ -79,9 +78,9 @@ const setupRoutes =
         try {
           const data = ConfirmEmailValidator.parse(req.body);
 
-          const handler = passauth.plugins?.[EMAIL_SENDER_PLUGIN]?.handler!;
-
-          const result = await handler.confirmEmail(data.email, data.token);
+          const result = await (
+            passauth as PassauthWithEmailSenderPlugin<User>
+          ).confirmEmail(data.email, data.token);
 
           if (!result.success) {
             return res.status(400).json({ message: "Failed to confirm email" });
@@ -100,11 +99,7 @@ const setupRoutes =
       try {
         const data = LoginValidator.parse(req.body);
 
-
-        const handler =
-          passauth.plugins?.[EMAIL_SENDER_PLUGIN]?.handler || passauth.handler;
-
-        const result = await handler.login<User>(data, ["role"]);
+        const result = await passauth.login<User>(data, ["role"]);
 
         res.json(result);
       } catch (error) {
@@ -118,9 +113,7 @@ const setupRoutes =
           req.body
         );
 
-        const handler = passauth.handler;
-
-        const result = await handler.refreshToken(accessToken, refreshToken);
+        const result = await passauth.refreshToken(accessToken, refreshToken);
 
         res.json(result);
       } catch (error) {
@@ -130,13 +123,12 @@ const setupRoutes =
 
     router.post(
       "/refresh-token/revoke",
-      AdminGuard(passauth.handler),
+      AdminGuard(passauth as PassauthHandler<User>),
       async (req, res) => {
         try {
           const data = RevokeRefreshTokenValidator.parse(req.body);
 
-          const handler = passauth.handler;
-          const user = await passauth.handler.repo.getUser(data);
+          const user = await passauth.repo.getUser(data);
 
           if (!user) {
             const logData =
@@ -145,7 +137,7 @@ const setupRoutes =
             throw new PassauthInvalidUserException(logData);
           }
 
-          handler.revokeRefreshToken(user.id);
+          passauth.revokeRefreshToken(user.id);
 
           res.json({ message: "Refresh token revoked" });
         } catch (error) {
@@ -161,11 +153,9 @@ const setupRoutes =
         try {
           const { email } = ResetPasswordValidator.parse(req.query);
 
-          const handler = passauth.plugins?.[EMAIL_SENDER_PLUGIN]?.handler!;
-
-          const { success, error } = await handler.sendResetPasswordEmail(
-            email
-          );
+          const { success, error } = await (
+            passauth as PassauthWithEmailSenderPlugin<User>
+          ).sendResetPasswordEmail(email);
 
           if (error) {
             console.error(`Failed to reset password for ${email}:`, error);
@@ -186,13 +176,9 @@ const setupRoutes =
         try {
           const data = ConfirmResetPasswordValidator.parse(req.body);
 
-          const handler = passauth.plugins?.[EMAIL_SENDER_PLUGIN]?.handler!;
-
-          const result = await handler.confirmResetPassword(
-            data.email,
-            data.token,
-            data.password
-          );
+          const result = await (
+            passauth as PassauthWithEmailSenderPlugin<User>
+          ).confirmResetPassword(data.email, data.token, data.password);
 
           res.json(result);
         } catch (error) {
@@ -207,12 +193,12 @@ const setupRoutes =
 export const PassauthExpress = (config: PassauthExpressConfig) => {
   const { config: passauthConfig, emailConfig } = config;
 
-  let passauth: PassauthInstance;
+  let passauth: any;
 
   if (emailConfig) {
     passauth = Passauth({
       ...passauthConfig,
-      plugins: [EmailSenderPlugin(emailConfig)],
+      plugins: [EmailSenderPlugin(emailConfig)] as const,
     });
   } else {
     passauth = Passauth({
@@ -222,7 +208,7 @@ export const PassauthExpress = (config: PassauthExpressConfig) => {
   }
 
   return {
-    setupRoutes: setupRoutes(passauth, !!emailConfig),
-    passauth: passauth.handler,
+    setupRoutes: setupRoutes(passauth.handler, !!emailConfig),
+    passauth: passauth.handler as PassauthWithEmailSenderPlugin<User>,
   };
 };

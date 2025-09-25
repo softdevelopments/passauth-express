@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthHandler } from "passauth";
+import { AuthHandler, PassauthHandler } from "passauth";
 import { User } from "../interfaces/user.types.js";
 import { JwtPayload } from "../interfaces/auth.types.js";
 
 export const AdminGuard =
-  (handler: AuthHandler<User>) =>
+  (handler: PassauthHandler<User>) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const token = req.headers.authorization?.split(" ")[1];
