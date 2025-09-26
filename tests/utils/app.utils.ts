@@ -9,9 +9,9 @@ import {
   Table,
 } from "sequelize-typescript";
 import { AuthRepo, PassauthConfiguration } from "passauth";
-import { EmailPluginOptions } from "@passauth/email-plugin";
+import { EmailPluginOptions, EmailSenderPlugin } from "@passauth/email-plugin";
 import { AuthMiddleware, PassauthExpress } from "../../src/index";
-import type { UserRole } from "../../src/interfaces/user.types";
+import type { User, UserRole } from "../../src/interfaces/user.types";
 import { EmailClientTest } from "./EmailClient";
 
 const redisClient = new Redis({
@@ -20,11 +20,14 @@ const redisClient = new Redis({
 });
 
 @Table
-class User extends Model {
+class UserModel extends Model {
   declare id: number;
 
   @Column({ type: DataType.STRING })
   email: string;
+
+  @Column({ type: DataType.BOOLEAN })
+  isBlocked: boolean;
 
   @Column({ type: DataType.STRING })
   password: string;
@@ -47,7 +50,7 @@ export const setupApp = async () => {
     password: "postgres",
     database: "passauth_express",
     port: 5432,
-    models: [User],
+    models: [UserModel],
     define: {
       underscored: true,
     },
@@ -61,12 +64,12 @@ export const setupApp = async () => {
 
   const passauthRepo = {
     getUser: async (user: Partial<User>) => {
-      const foundUser = await User.findOne({ where: user });
+      const foundUser = await UserModel.findOne({ where: user });
 
       return foundUser;
     },
     createUser: async (userDto) => {
-      const newUser = await User.create(userDto);
+      const newUser = await UserModel.create(userDto);
 
       newUser.save();
 
@@ -89,14 +92,14 @@ export const setupApp = async () => {
     secretKey: "secret-key",
     saltingRounds: 4,
     repo: passauthRepo,
-  } as PassauthConfiguration<User>;
+  } as PassauthConfiguration<User, [ReturnType<typeof EmailSenderPlugin>]>;
 
   const emailClient = new EmailClientTest();
 
   const emailRepo = {
     confirmEmail: async (email: string) => {
       try {
-        const user = await User.findOne({ where: { email } });
+        const user = await UserModel.findOne({ where: { email } });
 
         if (!user) {
           return false;
@@ -113,7 +116,7 @@ export const setupApp = async () => {
     },
     resetPassword: async (email: string, password: string) => {
       try {
-        const user = await User.findOne({ where: { email } });
+        const user = await UserModel.findOne({ where: { email } });
 
         if (!user) {
           return false;
@@ -170,4 +173,4 @@ export const setupApp = async () => {
   };
 };
 
-export { User as UserModel };
+export { UserModel };
