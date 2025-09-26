@@ -6,9 +6,10 @@ export type PassauthExpressConfig = {
     config: PassauthConfiguration<UserPluginEmailSender, [
         ReturnType<typeof EmailSenderPlugin>
     ]>;
-    emailConfig: EmailPluginOptions;
+    emailConfig?: EmailPluginOptions;
 };
 export declare const PassauthExpress: (config: PassauthExpressConfig) => {
     setupRoutes: () => import("express-serve-static-core").Router;
     passauth: EmailSenderHandler<User> | PassauthHandler<User>;
 };
+export type { User };
