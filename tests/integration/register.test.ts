@@ -24,7 +24,7 @@ describe("Register with email-plugin", () => {
       app: appInstance,
       sequelize: sequelizeInstance,
       emailClient: emailClientInstance,
-    } = await setupApp();
+    } = await setupApp(true);
 
     app = appInstance;
     sequelize = sequelizeInstance;
@@ -237,6 +237,56 @@ describe("Register with email-plugin", () => {
         .send({
           email: "test@example.com",
           token: token,
+        })
+        .expect(400);
+    });
+  });
+});
+
+describe("Register without email-plugin", () => {
+  let app: Express;
+  let sequelize: Sequelize;
+
+  beforeAll(async () => {
+    const { app: appInstance, sequelize: sequelizeInstance } = await setupApp();
+
+    app = appInstance;
+    sequelize = sequelizeInstance;
+  });
+
+  describe("Route /auth/register", () => {
+    beforeEach(async () => {
+      await sequelize.truncate({ cascade: true });
+      jest.clearAllMocks();
+    });
+
+    test("Should register user successfully", async () => {
+      const response = await request(app).post("/auth/register").send({
+        email: "test@example.com",
+        password: "password",
+      });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty(
+        "message",
+        "Registration successful"
+      );
+    });
+
+    test("Should fail if email is already registered", async () => {
+      await request(app)
+        .post("/auth/register")
+        .send({
+          email: "test@example.com",
+          password: "password",
+        })
+        .expect(201);
+
+      await request(app)
+        .post("/auth/register")
+        .send({
+          email: "test@example.com",
+          password: "password",
         })
         .expect(400);
     });

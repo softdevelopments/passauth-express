@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Router } from "express";
 import Redis from "ioredis";
 import {
   Column,
@@ -10,7 +10,11 @@ import {
 } from "sequelize-typescript";
 import { AuthRepo, PassauthConfiguration } from "passauth";
 import { EmailPluginOptions, EmailSenderPlugin } from "@passauth/email-plugin";
-import { AuthMiddleware, PassauthExpress } from "../../src/index";
+import {
+  AuthMiddleware,
+  PassauthExpress,
+  PassauthExpressConfig,
+} from "../../src/index";
 import type { User, UserRole } from "../../src/interfaces/user.types";
 import { EmailClientTest } from "./EmailClient";
 
@@ -40,7 +44,7 @@ class UserModel extends Model {
   role: UserRole;
 }
 
-export const setupApp = async () => {
+export const setupApp = async (withEmailConfig = false) => {
   const app = express();
 
   const sequelize = new Sequelize({
@@ -149,10 +153,14 @@ export const setupApp = async () => {
     repo: emailRepo,
   } as EmailPluginOptions;
 
-  const { setupRoutes, passauth } = PassauthExpress({
-    config,
-    emailConfig,
-  });
+  const passauthExpressConfig: PassauthExpressConfig = withEmailConfig
+    ? {
+        config,
+        emailConfig,
+      }
+    : { config };
+
+  const { setupRoutes, passauth } = PassauthExpress(passauthExpressConfig);
 
   const router = setupRoutes();
 

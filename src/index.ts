@@ -33,13 +33,13 @@ export type PassauthExpressConfig = {
     UserPluginEmailSender,
     [ReturnType<typeof EmailSenderPlugin>]
   >;
-  emailConfig: EmailPluginOptions;
+  emailConfig?: EmailPluginOptions;
 };
 
 const setupRoutes =
   (
     passauth: EmailSenderHandler<User> | PassauthHandler<User>,
-    withEmailPlugin: boolean,
+    withEmailPlugin: boolean
   ) =>
   () => {
     const router = Router();
@@ -63,7 +63,7 @@ const setupRoutes =
           const data = SendEmailConfirmationValidator.parse(req.query);
 
           await (passauth as EmailSenderHandler<User>).sendConfirmPasswordEmail(
-            data.email,
+            data.email
           );
 
           res.status(200).json({ message: "Confirmation email sent" });
@@ -88,7 +88,6 @@ const setupRoutes =
     }
 
     // Login Routes
-
     router.post("/login", async (req, res) => {
       try {
         const data = LoginValidator.parse(req.body);
@@ -104,7 +103,7 @@ const setupRoutes =
     router.post("/refresh-token", async (req, res) => {
       try {
         const { accessToken, refreshToken } = RefreshTokenValidator.parse(
-          req.body,
+          req.body
         );
 
         const result = await passauth.refreshToken(accessToken, refreshToken);
@@ -137,11 +136,10 @@ const setupRoutes =
         } catch (error) {
           errorHandler(error, res, "Failed to revoke refresh token");
         }
-      },
+      }
     );
 
     // Reset Password Routes
-
     if (withEmailPlugin) {
       router.get("/reset-password", async (req, res) => {
         try {
@@ -210,3 +208,5 @@ export const PassauthExpress = (config: PassauthExpressConfig) => {
       | PassauthHandler<User>,
   };
 };
+
+export type { User };
