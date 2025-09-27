@@ -13,7 +13,11 @@
     },
     "./interfaces": {
       "import": "./dist/interfaces/index.js",
-      "types": "./dist/auth/index.d.ts"
+      "types": "./dist/interfaces/index.d.ts"
+    },
+    "./middlewares": {
+      "import": "./dist/middlewares/index.js",
+      "types": "./dist/middlewares/index.d.ts"
     }
   },
   "files": [
