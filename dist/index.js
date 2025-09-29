@@ -4,8 +4,8 @@ import { EmailSenderPlugin, } from "@passauth/email-plugin";
 import { ConfirmResetPasswordValidator, LoginValidator, RefreshTokenValidator, ResetPasswordValidator, RevokeRefreshTokenValidator, } from "./validator/login.validator.js";
 import { errorHandler } from "./utils/error-handler.js";
 import { ConfirmEmailValidator, RegisterValidator, SendEmailConfirmationValidator, } from "./validator/register.validator.js";
-import { AdminGuard } from "./middlewares/admin-guard.js";
-export { AdminGuard, AuthMiddleware } from "./middlewares/admin-guard.js";
+import { RoleGuard } from "./middlewares/admin-guard.js";
+export { RoleGuard, AuthMiddleware } from "./middlewares/admin-guard.js";
 const setupRoutes = (passauth, withEmailPlugin) => () => {
     const router = Router();
     // Register Routes
@@ -45,7 +45,7 @@ const setupRoutes = (passauth, withEmailPlugin) => () => {
     router.post("/login", async (req, res) => {
         try {
             const data = LoginValidator.parse(req.body);
-            const result = await passauth.login(data, ["role"]);
+            const result = await passauth.login(data, ["roles"]);
             res.json(result);
         }
         catch (error) {
@@ -62,7 +62,7 @@ const setupRoutes = (passauth, withEmailPlugin) => () => {
             errorHandler(error, res, "Failed to refresh access token");
         }
     });
-    router.post("/refresh-token/revoke", AdminGuard(passauth), async (req, res) => {
+    router.post("/refresh-token/revoke", RoleGuard(passauth, ["admin"]), async (req, res) => {
         try {
             const data = RevokeRefreshTokenValidator.parse(req.body);
             const user = await passauth.repo.getUser(data);

@@ -1,8 +1,9 @@
-export const AdminGuard = (handler) => async (req, res, next) => {
+export const RoleGuard = (handler, roles) => async (req, res, next) => {
     try {
         const token = req.headers.authorization?.split(" ")[1];
         const decodedToken = handler.verifyAccessToken(token || "");
-        if (!decodedToken || decodedToken.data?.role !== "admin") {
+        if (!decodedToken ||
+            decodedToken.data?.roles.some((role) => roles.includes(role))) {
             return res.status(403).json({ message: "Forbidden" });
         }
         next();

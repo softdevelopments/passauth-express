@@ -4,15 +4,18 @@ import { User } from "../interfaces/user.types.js";
 import { JwtPayload } from "../interfaces/auth.types.js";
 import { EmailSenderHandler } from "@passauth/email-plugin";
 
-export const AdminGuard =
-  (handler: PassauthHandler<User>) =>
+export const RoleGuard =
+  (handler: PassauthHandler<User>, roles: string[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const token = req.headers.authorization?.split(" ")[1];
 
       const decodedToken = handler.verifyAccessToken<JwtPayload>(token || "");
 
-      if (!decodedToken || decodedToken.data?.role !== "admin") {
+      if (
+        !decodedToken ||
+        decodedToken.data?.roles.some((role) => roles.includes(role))
+      ) {
         return res.status(403).json({ message: "Forbidden" });
       }
 

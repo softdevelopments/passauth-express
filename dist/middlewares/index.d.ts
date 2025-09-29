@@ -1,1 +1,1 @@
-export { AdminGuard, AuthMiddleware } from "./admin-guard.js";
+export { RoleGuard, AuthMiddleware } from "./admin-guard.js";

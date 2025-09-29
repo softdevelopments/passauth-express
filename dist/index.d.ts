@@ -1,7 +1,7 @@
 import { PassauthHandler, type PassauthConfiguration } from "passauth";
 import { EmailPluginOptions, EmailSenderHandler, EmailSenderPlugin, UserPluginEmailSender } from "@passauth/email-plugin";
 import { User } from "./interfaces/user.types.js";
-export { AdminGuard, AuthMiddleware } from "./middlewares/admin-guard.js";
+export { RoleGuard, AuthMiddleware } from "./middlewares/admin-guard.js";
 export type PassauthExpressConfig = {
     config: PassauthConfiguration<UserPluginEmailSender, [
         ReturnType<typeof EmailSenderPlugin>
