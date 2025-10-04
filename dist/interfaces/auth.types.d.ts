@@ -1,3 +1,3 @@
 export type JwtPayload = {
-  roles: string[];
+    roles: string[];
 };

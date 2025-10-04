@@ -51,8 +51,8 @@ class UserModel extends Model {
   indexes: [
     {
       name: "idx_user_role__role__user_id_unique",
-      unique: true,
       fields: ["role", "user_id"],
+      unique: true,
     },
   ],
 })
@@ -210,7 +210,7 @@ export const setupApp = async (withEmailConfig = false) => {
     RoleGuard(["profile-1"]),
     (req, res) => {
       res.send({ message: "ok" });
-    },
+    }
   );
   app.get(
     "/profile-2",
@@ -218,7 +218,7 @@ export const setupApp = async (withEmailConfig = false) => {
     RoleGuard(["profile-2"]),
     (req, res) => {
       res.send({ message: "ok" });
-    },
+    }
   );
 
   return {
