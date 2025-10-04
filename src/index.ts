@@ -25,7 +25,7 @@ import {
   SendEmailConfirmationValidator,
 } from "./validator/register.validator";
 import { User } from "./interfaces/user.types";
-import { RoleGuard } from "./middlewares/admin-guard";
+import { AuthMiddleware, RoleGuard } from "./middlewares";
 export { RoleGuard, AuthMiddleware } from "./middlewares/admin-guard";
 
 export type PassauthExpressConfig = {
@@ -116,7 +116,8 @@ const setupRoutes =
 
     router.post(
       "/refresh-token/revoke",
-      RoleGuard(passauth as PassauthHandler<User>, ["admin"]),
+      AuthMiddleware(passauth),
+      RoleGuard(["admin"]),
       async (req, res) => {
         try {
           const data = RevokeRefreshTokenValidator.parse(req.body);

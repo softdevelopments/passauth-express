@@ -4,6 +4,8 @@ import {
   Column,
   DataType,
   Default,
+  ForeignKey,
+  HasMany,
   Model,
   Sequelize,
   Table,
@@ -14,8 +16,9 @@ import {
   AuthMiddleware,
   PassauthExpress,
   PassauthExpressConfig,
+  RoleGuard,
 } from "../../src/index";
-import type { User, UserRole } from "../../src/interfaces/user.types";
+import type { User } from "../../src/interfaces/user.types";
 import { EmailClientTest } from "./EmailClient";
 
 const redisClient = new Redis({
@@ -40,8 +43,28 @@ class UserModel extends Model {
   @Column({ type: DataType.BOOLEAN })
   emailVerified: boolean;
 
-  @Column({ type: DataType.ENUM("user", "admin") })
-  role: UserRole;
+  @HasMany(() => UserRoleModel)
+  roles: UserRole[];
+}
+
+@Table({
+  indexes: [
+    {
+      name: "idx_user_role__role__user_id_unique",
+      unique: true,
+      fields: ["role", "user_id"],
+    },
+  ],
+})
+class UserRoleModel extends Model {
+  declare id: number;
+
+  @Column({ type: DataType.ENUM("user", "admin", "profile-1", "profile-2") })
+  role: string;
+
+  @ForeignKey(() => UserModel)
+  @Column({ type: DataType.INTEGER })
+  userId: number;
 }
 
 export const setupApp = async (withEmailConfig = false) => {
@@ -54,7 +77,7 @@ export const setupApp = async (withEmailConfig = false) => {
     password: "postgres",
     database: "passauth_express",
     port: 5432,
-    models: [UserModel],
+    models: [UserModel, UserRoleModel],
     define: {
       underscored: true,
     },
@@ -70,14 +93,27 @@ export const setupApp = async (withEmailConfig = false) => {
     getUser: async (user: Partial<User>) => {
       const foundUser = await UserModel.findOne({ where: user });
 
-      return foundUser;
+      if (!foundUser) {
+        return null;
+      }
+
+      const roles = await UserRoleModel.findAll({
+        where: {
+          userId: foundUser?.id,
+        },
+      });
+
+      return {
+        ...(await foundUser?.toJSON()),
+        roles: roles.map((r) => r.role),
+      };
     },
     createUser: async (userDto) => {
       const newUser = await UserModel.create(userDto);
 
       newUser.save();
 
-      return newUser;
+      return newUser as unknown as User;
     },
     saveCachedToken: async (userId, token, expiresInMs) => {
       await redisClient.set(`auth-token:${userId}`, token, "PX", expiresInMs);
@@ -168,6 +204,22 @@ export const setupApp = async (withEmailConfig = false) => {
   app.get("/is-logged", AuthMiddleware(passauth), (req, res) => {
     res.send({ message: "ok" });
   });
+  app.get(
+    "/profile-1",
+    AuthMiddleware(passauth),
+    RoleGuard(["profile-1"]),
+    (req, res) => {
+      res.send({ message: "ok" });
+    },
+  );
+  app.get(
+    "/profile-2",
+    AuthMiddleware(passauth),
+    RoleGuard(["profile-2"]),
+    (req, res) => {
+      res.send({ message: "ok" });
+    },
+  );
 
   return {
     app,
@@ -181,4 +233,4 @@ export const setupApp = async (withEmailConfig = false) => {
   };
 };
 
-export { UserModel };
+export { UserModel, UserRoleModel };

@@ -12,7 +12,20 @@ import { Express } from "express";
 import { Sequelize } from "sequelize";
 import { hash } from "passauth/auth/utils";
 import { DEFAULT_JWT_EXPIRATION_MS, DEFAULT_SALTING_ROUNDS } from "passauth";
-import { setupApp, UserModel } from "../utils/app.utils";
+import { setupApp, UserModel, UserRoleModel } from "../utils/app.utils";
+
+const createAdminUser = async () => {
+  const user = await UserModel.create({
+    email: "admin@example.com",
+    password: await hash("admin-password", DEFAULT_SALTING_ROUNDS),
+    emailVerified: true,
+  });
+
+  await UserRoleModel.create({
+    userId: user.id,
+    role: "admin",
+  });
+};
 
 describe("Login with email-plugin", () => {
   let app: Express;
@@ -43,15 +56,6 @@ describe("Login with email-plugin", () => {
 
       await registeredUser.save();
     }
-  };
-
-  const createAdminUser = async () => {
-    await UserModel.create({
-      email: "admin@example.com",
-      password: await hash("admin-password", DEFAULT_SALTING_ROUNDS),
-      role: "admin",
-      emailVerified: true,
-    });
   };
 
   describe("Route /auth/login", () => {
@@ -221,20 +225,33 @@ describe("Login without email-plugin", () => {
     sequelize = sequelizeInstance;
   });
 
-  const registerAndConfirmUser = async (email: string, password: string) => {
-    await request(app).post("/auth/register").send({
-      email,
-      password,
-    });
-  };
+  const registerUser = async (
+    email: string,
+    password: string,
+    roles?: string[],
+  ) => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        email,
+        password,
+      })
+      .expect(201);
 
-  const createAdminUser = async () => {
-    await UserModel.create({
-      email: "admin@example.com",
-      password: await hash("admin-password", DEFAULT_SALTING_ROUNDS),
-      role: "admin",
-      emailVerified: true,
-    });
+    if (roles) {
+      const user = await UserModel.findOne({
+        where: {
+          email,
+        },
+      });
+
+      for (const role of roles) {
+        await UserRoleModel.create({
+          userId: user?.id,
+          role,
+        });
+      }
+    }
   };
 
   describe("Route /auth/login", () => {
@@ -243,7 +260,7 @@ describe("Login without email-plugin", () => {
       jest.clearAllMocks();
       jest.clearAllTimers();
 
-      await registerAndConfirmUser("test@example.com", "password");
+      await registerUser("test@example.com", "password");
     });
 
     afterAll(async () => {
@@ -372,6 +389,52 @@ describe("Login without email-plugin", () => {
           refreshToken: loginResponse.body.refreshToken,
         })
         .expect(400);
+    });
+  });
+
+  describe("Middlewares", () => {
+    describe("Role Guard", () => {
+      test("Should allow only user with correct role to acesss protected route", async () => {
+        // Profile 1
+        await registerUser("profile-1@email.com", "password123", ["profile-1"]);
+
+        const loginProfile1 = await request(app)
+          .post("/auth/login")
+          .send({
+            email: "profile-1@email.com",
+            password: "password123",
+          })
+          .expect(200);
+
+        await request(app)
+          .get("/profile-1")
+          .set("Authorization", `Bearer ${loginProfile1.body.accessToken}`)
+          .expect(200);
+        await request(app)
+          .get("/profile-2")
+          .set("Authorization", `Bearer ${loginProfile1.body.accessToken}`)
+          .expect(403);
+
+        // Profile 2
+        await registerUser("profile-2@email.com", "password456", ["profile-2"]);
+
+        const loginProfile2 = await request(app)
+          .post("/auth/login")
+          .send({
+            email: "profile-2@email.com",
+            password: "password456",
+          })
+          .expect(200);
+
+        await request(app)
+          .get("/profile-1")
+          .set("Authorization", `Bearer ${loginProfile2.body.accessToken}`)
+          .expect(403);
+        await request(app)
+          .get("/profile-2")
+          .set("Authorization", `Bearer ${loginProfile2.body.accessToken}`)
+          .expect(200);
+      });
     });
   });
 });
