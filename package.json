@@ -37,7 +37,6 @@
   "license": "ISC",
   "devDependencies": {
     "@jest/globals": "^30.0.5",
-    "@passauth/email-plugin": "^1.0.20",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.0",
@@ -65,7 +64,7 @@
     "zod": "^4.1.8"
   },
   "peerDependencies": {
-    "@passauth/email-plugin": "^1.0.20",
+    "@passauth/email-plugin": "^1.0.21",
     "express": "^5.1.0",
     "passauth": "^1.0.23"
   }
