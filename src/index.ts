@@ -27,6 +27,7 @@ import {
 import { User } from "./interfaces/user.types";
 import { AuthMiddleware, RoleGuard } from "./middlewares";
 export { RoleGuard, AuthMiddleware } from "./middlewares/admin-guard";
+import * as utils from "passauth/auth/utils";
 
 export type PassauthExpressConfig = {
   config: PassauthConfiguration<
@@ -39,7 +40,7 @@ export type PassauthExpressConfig = {
 const setupRoutes =
   (
     passauth: EmailSenderHandler<User> | PassauthHandler<User>,
-    withEmailPlugin: boolean,
+    withEmailPlugin: boolean
   ) =>
   () => {
     const router = Router();
@@ -63,7 +64,7 @@ const setupRoutes =
           const data = SendEmailConfirmationValidator.parse(req.query);
 
           await (passauth as EmailSenderHandler<User>).sendConfirmPasswordEmail(
-            data.email,
+            data.email
           );
 
           res.status(200).json({ message: "Confirmation email sent" });
@@ -103,7 +104,7 @@ const setupRoutes =
     router.post("/refresh-token", async (req, res) => {
       try {
         const { accessToken, refreshToken } = RefreshTokenValidator.parse(
-          req.body,
+          req.body
         );
 
         const result = await passauth.refreshToken(accessToken, refreshToken);
@@ -137,7 +138,7 @@ const setupRoutes =
         } catch (error) {
           errorHandler(error, res, "Failed to revoke refresh token");
         }
-      },
+      }
     );
 
     // Reset Password Routes
@@ -207,6 +208,7 @@ export const PassauthExpress = (config: PassauthExpressConfig) => {
     passauth: passauthHandler as
       | EmailSenderHandler<User>
       | PassauthHandler<User>,
+    utils,
   };
 };
 

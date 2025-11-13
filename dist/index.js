@@ -6,6 +6,7 @@ import { errorHandler } from "./utils/error-handler.js";
 import { ConfirmEmailValidator, RegisterValidator, SendEmailConfirmationValidator, } from "./validator/register.validator.js";
 import { AuthMiddleware, RoleGuard } from "./middlewares/index.js";
 export { RoleGuard, AuthMiddleware } from "./middlewares/admin-guard.js";
+import * as utils from "passauth/auth/utils";
 const setupRoutes = (passauth, withEmailPlugin) => () => {
     const router = Router();
     // Register Routes
@@ -130,6 +131,7 @@ export const PassauthExpress = (config) => {
     return {
         setupRoutes: setupRoutes(passauthHandler, !!emailConfig),
         passauth: passauthHandler,
+        utils,
     };
 };
 //# sourceMappingURL=index.js.map
