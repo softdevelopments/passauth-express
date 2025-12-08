@@ -8,7 +8,7 @@ export type PassauthExpressConfig = {
         ReturnType<typeof EmailSenderPlugin>
     ]>;
     emailConfig?: EmailPluginOptions;
-    hooks: {
+    hooks?: {
         afterLogin: (data: {
             email: string;
         }) => Promise<any>;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router } from "express";
 import { Passauth, PassauthInvalidUserException, } from "passauth";
 import { EmailSenderPlugin, } from "@passauth/email-plugin";

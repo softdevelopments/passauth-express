@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router } from "express";
 import {
   Passauth,
@@ -35,7 +36,7 @@ export type PassauthExpressConfig = {
     [ReturnType<typeof EmailSenderPlugin>]
   >;
   emailConfig?: EmailPluginOptions;
-  hooks: {
+  hooks?: {
     afterLogin: (data: { email: string }) => Promise<any>;
   };
 };
