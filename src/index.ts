@@ -35,12 +35,18 @@ export type PassauthExpressConfig = {
     [ReturnType<typeof EmailSenderPlugin>]
   >;
   emailConfig?: EmailPluginOptions;
+  hooks: {
+    afterLogin: (data: { email: string }) => Promise<any>;
+  };
 };
 
 const setupRoutes =
   (
     passauth: EmailSenderHandler<User> | PassauthHandler<User>,
-    withEmailPlugin: boolean
+    withEmailPlugin: boolean,
+    config: {
+      hooks: PassauthExpressConfig["hooks"];
+    }
   ) =>
   () => {
     const router = Router();
@@ -95,7 +101,11 @@ const setupRoutes =
 
         const result = await passauth.login(data, ["roles"]);
 
-        res.json(result);
+        const additionalData = config?.hooks?.afterLogin
+          ? await config.hooks.afterLogin({ email: data.email })
+          : {};
+
+        res.json({ ...result, ...additionalData });
       } catch (error) {
         errorHandler(error, res, "Failed to login");
       }
@@ -185,7 +195,7 @@ const setupRoutes =
   };
 
 export const PassauthExpress = (config: PassauthExpressConfig) => {
-  const { config: passauthConfig, emailConfig } = config;
+  const { config: passauthConfig, emailConfig, hooks } = config;
 
   let passauthHandler: EmailSenderHandler<User> | PassauthHandler<User>;
 
@@ -204,7 +214,9 @@ export const PassauthExpress = (config: PassauthExpressConfig) => {
   }
 
   return {
-    setupRoutes: setupRoutes(passauthHandler, !!emailConfig),
+    setupRoutes: setupRoutes(passauthHandler, !!emailConfig, {
+      hooks,
+    }),
     passauth: passauthHandler as
       | EmailSenderHandler<User>
       | PassauthHandler<User>,

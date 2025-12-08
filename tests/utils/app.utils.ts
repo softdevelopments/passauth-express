@@ -67,7 +67,10 @@ class UserRoleModel extends Model {
   userId: number;
 }
 
-export const setupApp = async (withEmailConfig = false) => {
+export const setupApp = async (
+  withEmailConfig = false,
+  apiConfig?: { hooks: PassauthExpressConfig["hooks"] }
+) => {
   const app = express();
 
   const sequelize = new Sequelize({
@@ -193,8 +196,9 @@ export const setupApp = async (withEmailConfig = false) => {
     ? {
         config,
         emailConfig,
+        ...apiConfig,
       }
-    : { config };
+    : { config, ...apiConfig };
 
   const { setupRoutes, passauth } = PassauthExpress(passauthExpressConfig);
 

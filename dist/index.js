@@ -7,7 +7,7 @@ import { ConfirmEmailValidator, RegisterValidator, SendEmailConfirmationValidato
 import { AuthMiddleware, RoleGuard } from "./middlewares/index.js";
 export { RoleGuard, AuthMiddleware } from "./middlewares/admin-guard.js";
 import * as utils from "passauth/auth/utils";
-const setupRoutes = (passauth, withEmailPlugin) => () => {
+const setupRoutes = (passauth, withEmailPlugin, config) => () => {
     const router = Router();
     // Register Routes
     router.post("/register", async (req, res) => {
@@ -47,7 +47,10 @@ const setupRoutes = (passauth, withEmailPlugin) => () => {
         try {
             const data = LoginValidator.parse(req.body);
             const result = await passauth.login(data, ["roles"]);
-            res.json(result);
+            const additionalData = config?.hooks?.afterLogin
+                ? await config.hooks.afterLogin({ email: data.email })
+                : {};
+            res.json({ ...result, ...additionalData });
         }
         catch (error) {
             errorHandler(error, res, "Failed to login");
@@ -112,7 +115,7 @@ const setupRoutes = (passauth, withEmailPlugin) => () => {
     return router;
 };
 export const PassauthExpress = (config) => {
-    const { config: passauthConfig, emailConfig } = config;
+    const { config: passauthConfig, emailConfig, hooks } = config;
     let passauthHandler;
     if (emailConfig) {
         const passauth = Passauth({
@@ -129,7 +132,9 @@ export const PassauthExpress = (config) => {
         passauthHandler = passauth.handler;
     }
     return {
-        setupRoutes: setupRoutes(passauthHandler, !!emailConfig),
+        setupRoutes: setupRoutes(passauthHandler, !!emailConfig, {
+            hooks,
+        }),
         passauth: passauthHandler,
         utils,
     };

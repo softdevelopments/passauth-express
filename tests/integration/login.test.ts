@@ -228,7 +228,7 @@ describe("Login without email-plugin", () => {
   const registerUser = async (
     email: string,
     password: string,
-    roles?: string[],
+    roles?: string[]
   ) => {
     await request(app)
       .post("/auth/register")
@@ -389,6 +389,79 @@ describe("Login without email-plugin", () => {
           refreshToken: loginResponse.body.refreshToken,
         })
         .expect(400);
+    });
+  });
+
+  describe("Hooks", () => {
+    const registerUser = async (
+      app: Express,
+      data: {
+        email: string;
+        password: string;
+        roles?: string[];
+      }
+    ) => {
+      await request(app)
+        .post("/auth/register")
+        .send({
+          email: data.email,
+          password: data.password,
+        })
+        .expect(201);
+
+      if (data.roles) {
+        const user = await UserModel.findOne({
+          where: {
+            email: data.email,
+          },
+        });
+
+        for (const role of data.roles) {
+          await UserRoleModel.create({
+            userId: user?.id,
+            role,
+          });
+        }
+      }
+    };
+
+    describe("afterLogin", () => {
+      test("Should be able to inject login response", async () => {
+        const { app: appInstance } = await setupApp(false, {
+          hooks: {
+            async afterLogin(_data) {
+              return {
+                role: "super-admin",
+                nickname: "Johndoedoe",
+              };
+            },
+          },
+        });
+
+        await registerUser(appInstance, {
+          email: "test@example.com",
+          password: "password",
+        });
+
+        const response = await request(appInstance)
+          .post("/auth/login")
+          .send({
+            email: "test@example.com",
+            password: "password",
+          })
+          .expect(200);
+
+        expect(response.body).toHaveProperty("accessToken");
+        expect(response.body).toHaveProperty("refreshToken");
+        expect(response.body).toEqual(
+          expect.objectContaining({
+            accessToken: expect.any(String),
+            refreshToken: expect.any(String),
+            role: "super-admin",
+            nickname: "Johndoedoe",
+          })
+        );
+      });
     });
   });
 

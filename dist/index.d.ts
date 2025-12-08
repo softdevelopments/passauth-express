@@ -8,6 +8,11 @@ export type PassauthExpressConfig = {
         ReturnType<typeof EmailSenderPlugin>
     ]>;
     emailConfig?: EmailPluginOptions;
+    hooks: {
+        afterLogin: (data: {
+            email: string;
+        }) => Promise<any>;
+    };
 };
 export declare const PassauthExpress: (config: PassauthExpressConfig) => {
     setupRoutes: () => import("express-serve-static-core").Router;
