@@ -41,6 +41,12 @@ export type PassauthExpressConfig = {
   };
 };
 
+export type PassauthExpressInstance = {
+  setupRoutes: () => Router;
+  passauth: EmailSenderHandler<User> | PassauthHandler<User>;
+  utils: typeof utils;
+};
+
 const setupRoutes =
   (
     passauth: EmailSenderHandler<User> | PassauthHandler<User>,
@@ -195,7 +201,9 @@ const setupRoutes =
     return router;
   };
 
-export const PassauthExpress = (config: PassauthExpressConfig) => {
+export const PassauthExpress = (
+  config: PassauthExpressConfig
+): PassauthExpressInstance => {
   const { config: passauthConfig, emailConfig, hooks } = config;
 
   let passauthHandler: EmailSenderHandler<User> | PassauthHandler<User>;

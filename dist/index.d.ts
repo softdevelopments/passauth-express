@@ -1,3 +1,4 @@
+import { Router } from "express";
 import { PassauthHandler, type PassauthConfiguration } from "passauth";
 import { EmailPluginOptions, EmailSenderHandler, EmailSenderPlugin, UserPluginEmailSender } from "@passauth/email-plugin";
 import { User } from "./interfaces/user.types.js";
@@ -14,9 +15,10 @@ export type PassauthExpressConfig = {
         }) => Promise<any>;
     };
 };
-export declare const PassauthExpress: (config: PassauthExpressConfig) => {
-    setupRoutes: () => import("express-serve-static-core").Router;
+export type PassauthExpressInstance = {
+    setupRoutes: () => Router;
     passauth: EmailSenderHandler<User> | PassauthHandler<User>;
     utils: typeof utils;
 };
+export declare const PassauthExpress: (config: PassauthExpressConfig) => PassauthExpressInstance;
 export type { User };
