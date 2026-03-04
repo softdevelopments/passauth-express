@@ -5,6 +5,7 @@ import { Passauth, PassauthHandler } from "passauth";
 import { User } from "./interfaces/user.types";
 import { PassauthExpressConfig } from "./interfaces/express.types";
 import { setupRoutes } from "./routes";
+import { EmailHandlerOptions } from "passauth/auth/interfaces";
 
 export type PassauthExpressInstance = {
   setupRoutes: () => Router;
@@ -22,7 +23,7 @@ export const PassauthExpress = (
   if (emailConfig) {
     const passauth = Passauth({
       ...passauthConfig,
-      email: emailConfig
+      email: emailConfig as EmailHandlerOptions
     });
     passauthHandler = passauth.handler as PassauthHandler<User>;
   } else {

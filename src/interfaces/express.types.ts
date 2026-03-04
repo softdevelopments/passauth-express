@@ -2,11 +2,8 @@
 import { Request } from "express";
 import { User } from "./user.types";
 import { type PassauthConfiguration } from "passauth";
-import {
-  EmailPluginOptions,
-  EmailSenderPlugin,
-  UserPluginEmailSender,
-} from "@passauth/email-plugin";
+import { EmailHandlerOptions } from "passauth/auth/interfaces";
+
 export { RoleGuard, AuthMiddleware } from "../middlewares/admin-guard";
 
 export type SessionData = {
@@ -18,11 +15,8 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export type PassauthExpressConfig = {
-  config: PassauthConfiguration<
-    UserPluginEmailSender,
-    [ReturnType<typeof EmailSenderPlugin>]
-  >;
-  emailConfig?: EmailPluginOptions;
+  config: PassauthConfiguration<User, []>;
+  emailConfig?: EmailHandlerOptions;
   hooks?: {
     afterLogin: (data: { email: string }) => Promise<any>;
   };

@@ -1,7 +1,6 @@
 import { Response, NextFunction } from "express";
 import { PassauthHandler } from "passauth";
 import { User } from "../interfaces/user.types.js";
-import { EmailSenderHandler } from "@passauth/email-plugin";
 import {
   AuthenticatedRequest,
   SessionData,
@@ -23,7 +22,7 @@ export const RoleGuard =
   };
 
 export const AuthMiddleware =
-  (handler: EmailSenderHandler<User> | PassauthHandler<User>) =>
+  (handler: PassauthHandler<User>) =>
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const decodedToken = handler.verifyAccessToken<
