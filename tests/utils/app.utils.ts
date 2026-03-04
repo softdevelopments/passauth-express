@@ -11,7 +11,6 @@ import {
   Table,
 } from "sequelize-typescript";
 import { AuthRepo, PassauthConfiguration } from "passauth";
-import { EmailPluginOptions, EmailSenderPlugin } from "@passauth/email-plugin";
 import {
   AuthMiddleware,
   PassauthExpress,
@@ -20,6 +19,7 @@ import {
 } from "../../src/index";
 import type { User } from "../../src/interfaces/user.types";
 import { EmailClientTest } from "./EmailClient";
+import { EmailHandlerOptions } from "passauth/auth/interfaces";
 
 const redisClient = new Redis({
   host: "redis",
@@ -135,7 +135,7 @@ export const setupApp = async (
     secretKey: "secret-key",
     saltingRounds: 4,
     repo: passauthRepo,
-  } as PassauthConfiguration<User, [ReturnType<typeof EmailSenderPlugin>]>;
+  } as PassauthConfiguration<User, []>;
 
   const emailClient = new EmailClientTest();
 
@@ -190,7 +190,7 @@ export const setupApp = async (
     client: emailClient,
     services: emailService,
     repo: emailRepo,
-  } as EmailPluginOptions;
+  } as EmailHandlerOptions;
 
   const passauthExpressConfig: PassauthExpressConfig = withEmailConfig
     ? {
