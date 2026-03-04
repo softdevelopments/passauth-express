@@ -238,3 +238,8 @@ export const setupApp = async (
 };
 
 export { UserModel, UserRoleModel };
+
+type Data = {
+  url: string;
+  email?: boolean;
+}
