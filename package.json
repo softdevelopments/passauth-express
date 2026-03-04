@@ -21,6 +21,10 @@
     "./middlewares": {
       "import": "./dist/middlewares/index.js",
       "types": "./dist/middlewares/index.d.ts"
+    },
+    "./docs": {
+      "import": "./dist/documentation/index.js",
+      "types": "./dist/documentation/index.d.ts"
     }
   },
   "files": [
