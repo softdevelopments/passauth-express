@@ -63,8 +63,7 @@
   },
   "dependencies": {
     "@mui/material": "^7.3.2",
-    "@passauth/email-plugin": "^1.0.23",
-    "passauth": "^1.0.24",
+    "passauth": "^2.0.0",
     "zod": "^4.1.8"
   },
   "peerDependencies": {

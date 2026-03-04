@@ -10,9 +10,9 @@ import {
   beforeEach,
   test,
 } from "@jest/globals";
-import type { EmailClient } from "@passauth/email-plugin/interfaces";
+import type { EmailClient } from  "passauth/auth/interfaces";
 import { setupApp, UserModel } from "../utils/app.utils";
-import { DEFAULT_CONFIRMATION_LINK_EXPIRATION_MS } from "@passauth/email-plugin/constants";
+import { DEFAULT_CONFIRMATION_LINK_EXPIRATION_MS } from "passauth/auth/constants";
 
 describe("Register with email-plugin", () => {
   let app: Express;

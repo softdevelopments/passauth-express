@@ -1,5 +1,5 @@
-import { UserPluginEmailSender } from "@passauth/email-plugin";
+import { type User as PassauthUser } from "passauth";
 
-export type User = UserPluginEmailSender & {
+export type User = PassauthUser & {
   roles: string[];
 };
