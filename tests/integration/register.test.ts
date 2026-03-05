@@ -13,6 +13,7 @@ import {
 import type { EmailClient } from  "passauth/auth/interfaces";
 import { setupApp, UserModel } from "../utils/app.utils";
 import { DEFAULT_CONFIRMATION_LINK_EXPIRATION_MS } from "passauth/auth/constants";
+import { z } from "zod";
 
 describe("Register with email-plugin", () => {
   let app: Express;
@@ -241,6 +242,75 @@ describe("Register with email-plugin", () => {
         .expect(400);
     });
   });
+
+  describe("Hooks", () => {
+    test("Should replace default register/send-email validation via beforeHandler", async () => {
+      const {
+        app: appInstance,
+        emailClient: emailClientInstance,
+      } = await setupApp(true, {
+        hooks: {
+          beforeHandler: {
+            registerSendEmail(req) {
+              const schema = z.object({
+                mail: z.email(),
+              });
+
+              const data = schema.parse(req.query);
+
+              return {
+                email: data.mail,
+              };
+            },
+          },
+        },
+      });
+      const emailSpy = jest.spyOn(emailClientInstance, "send");
+
+      const response = await request(appInstance)
+        .get("/auth/register/send-email")
+        .query({
+          mail: "hook-mail@example.com",
+        })
+        .expect(200);
+
+      expect(response.body).toEqual({
+        message: "Confirmation email sent",
+      });
+      expect(emailSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: expect.stringContaining("hook-mail@example.com"),
+        }),
+      );
+    });
+
+    test("Should replace default register/send-email response via afterHandler", async () => {
+      const { app: appInstance } = await setupApp(true, {
+        hooks: {
+          afterHandler: {
+            registerSendEmail({ data, result }) {
+              return {
+                delivered: result.success,
+                target: data.email,
+              };
+            },
+          },
+        },
+      });
+
+      const response = await request(appInstance)
+        .get("/auth/register/send-email")
+        .query({
+          email: "hook-after@example.com",
+        })
+        .expect(200);
+
+      expect(response.body).toEqual({
+        delivered: true,
+        target: "hook-after@example.com",
+      });
+    });
+  });
 });
 
 describe("Register without email-plugin", () => {
@@ -289,6 +359,34 @@ describe("Register without email-plugin", () => {
           password: "password",
         })
         .expect(400);
+    });
+
+    test("Should replace default register response via afterHandler", async () => {
+      const { app: appInstance } = await setupApp(false, {
+        hooks: {
+          afterHandler: {
+            register({ result }) {
+              return {
+                id: result.id,
+                email: result.email,
+              };
+            },
+          },
+        },
+      });
+
+      const response = await request(appInstance)
+        .post("/auth/register")
+        .send({
+          email: "after-register@example.com",
+          password: "password",
+        })
+        .expect(201);
+
+      expect(response.body).toEqual({
+        id: expect.any(Number),
+        email: "after-register@example.com",
+      });
     });
   });
 });

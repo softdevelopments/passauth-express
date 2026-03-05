@@ -22,7 +22,7 @@ export const setupRoutes =
     setupCoreRoutes(passauth, config, router)();
 
     if (withEmailPlugin) {
-      setupEmailRoutes(passauth, router)();
+      setupEmailRoutes(passauth, config, router)();
     }
 
     return router;
