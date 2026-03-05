@@ -15,10 +15,12 @@ It gives you a ready-to-use authentication router, optional email-based auth flo
 ## Installation
 
 ```bash
-npm install @passauth/express express
+npm install @passauth/express express zod
 ```
 
-> `express` is a peer dependency. You do not need to install `passauth` separately when using this package.
+> `express` and `zod` are peer dependencies. You do not need to install `passauth` separately when using this package.
+>
+> Recommendation: keep `zod` on a compatible major version to avoid duplicated instances and inconsistent `ZodError` handling.
 
 ## Quick start
 

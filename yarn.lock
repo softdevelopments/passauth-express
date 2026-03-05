@@ -3610,10 +3610,10 @@ parseurl@^1.3.3:
   resolved "https://registry.yarnpkg.com/parseurl/-/parseurl-1.3.3.tgz#9da19e7bee8d12dff0513ed5b76957793bc2e8d4"
   integrity sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==
 
-passauth@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/passauth/-/passauth-2.0.0.tgz#c39971d7953583b13dac4524bbb5a8f065c7e817"
-  integrity sha512-x/e51hjG9Jl1uWsdmADUAskwRlpDckdmOMpM/6A4LPelTPBUtlMcoN8O5hHF2tNau0ysFLnUmv5Dl/QmbL17QA==
+passauth@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/passauth/-/passauth-2.1.0.tgz#fad8c191ebcf8c33b57a135ef3c7ea60ae04e488"
+  integrity sha512-G6aJ83xubZn6fMCs5RD3Zb04opNuwzsE45rlY0Fhy06EAIx+JQkPgLcRgHbv/6PJKzwh4NCTGYBO4K2wnhWrwQ==
   dependencies:
     bcrypt "^6.0.0"
     jsonwebtoken "^9.0.3"
