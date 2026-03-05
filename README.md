@@ -39,12 +39,36 @@ const auth = PassauthExpress({
     // repo: ...
   },
 
-  // Optional hook called after successful login
+  // Optional hooks
   hooks: {
     async afterLogin({ email }) {
       return {
         profileLoadedFor: email,
       };
+    },
+    afterHandler: {
+      login({ data, result }) {
+        return {
+          token: result.accessToken,
+          userEmail: data.email,
+        };
+      },
+    },
+    beforeHandler: {
+      register(req) {
+        const payload = req.body as {
+          username: string;
+          secret: string;
+          nickname: string;
+        };
+
+        // Full override for POST /auth/register validation
+        return {
+          email: payload.username,
+          password: payload.secret,
+          nickname: payload.nickname,
+        };
+      },
     },
   },
 
@@ -87,7 +111,27 @@ type PassauthExpressConfig = {
   config: PassauthConfiguration<User, []>;
   emailConfig?: EmailHandlerOptions;
   hooks?: {
-    afterLogin: (data: { email: string }) => Promise<any>;
+    afterLogin?: (data: { email: string }) => Promise<any>;
+    beforeHandler?: {
+      register?: (req: Request) => Promise<any> | any;
+      login?: (req: Request) => Promise<any> | any;
+      refreshToken?: (req: Request) => Promise<any> | any;
+      revokeRefreshToken?: (req: Request) => Promise<any> | any;
+      registerSendEmail?: (req: Request) => Promise<any> | any;
+      registerConfirmEmail?: (req: Request) => Promise<any> | any;
+      resetPassword?: (req: Request) => Promise<any> | any;
+      resetPasswordConfirm?: (req: Request) => Promise<any> | any;
+    };
+    afterHandler?: {
+      register?: (params: { req: Request; data: any; result: any }) => Promise<any> | any;
+      login?: (params: { req: Request; data: any; result: any }) => Promise<any> | any;
+      refreshToken?: (params: { req: Request; data: any; result: any }) => Promise<any> | any;
+      revokeRefreshToken?: (params: { req: Request; data: any; result: any }) => Promise<any> | any;
+      registerSendEmail?: (params: { req: Request; data: any; result: any }) => Promise<any> | any;
+      registerConfirmEmail?: (params: { req: Request; data: any; result: any }) => Promise<any> | any;
+      resetPassword?: (params: { req: Request; data: any; result: any }) => Promise<any> | any;
+      resetPasswordConfirm?: (params: { req: Request; data: any; result: any }) => Promise<any> | any;
+    };
   };
 };
 ```
@@ -98,7 +142,7 @@ type PassauthExpressConfig = {
 | --- | --- | --- | --- |
 | `config` | `PassauthConfiguration<User, []>` | **Yes** | Main Passauth setup. This object is forwarded directly to `Passauth(...)` and defines how users are stored, authenticated, and tokenized. |
 | `emailConfig` | `EmailHandlerOptions` | No | Enables email-related authentication flows (email confirmation and reset-password) and provides email delivery settings/handlers. |
-| `hooks` | `{ afterLogin: (data: { email: string }) => Promise<any> }` | No | Lets you inject custom behavior into library flow. Currently supports `afterLogin`. |
+| `hooks` | `{ afterLogin?: ..., beforeHandler?: ..., afterHandler?: ... }` | No | Lets you inject custom behavior into library flow. Supports pre-processing/validation and post-processing of responses per route. |
 
 ### `config` (required)
 
@@ -139,6 +183,128 @@ When `emailConfig` is omitted, those routes are not mounted.
   - `data.email` (`string`, required): authenticated user email.
 - **Return value:** `Promise<any>` (your custom object).
 - **Behavior:** the resolved object is merged into the login response payload.
+- **Precedence note:** this hook is ignored when `hooks.afterHandler?.login` is defined.
+
+#### `hooks.beforeHandler`
+
+- **Type:** object
+- **Required:** No
+- **Purpose:** lets you fully replace the default route pre-validation logic.
+- **Behavior:** if a route-specific `beforeHandler` is provided, the built-in validator for that route is not executed.
+- **Available route keys:**
+  - `register` (`POST /auth/register`)
+  - `login` (`POST /auth/login`)
+  - `refreshToken` (`POST /auth/refresh-token`)
+  - `revokeRefreshToken` (`POST /auth/refresh-token/revoke`)
+  - `registerSendEmail` (`GET /auth/register/send-email`)
+  - `registerConfirmEmail` (`POST /auth/register/confirm-email`)
+  - `resetPassword` (`GET /auth/reset-password`)
+  - `resetPasswordConfirm` (`POST /auth/reset-password`)
+
+#### `hooks.afterHandler`
+
+- **Type:** object
+- **Required:** No
+- **Purpose:** lets you replace the default successful response payload per route.
+- **Behavior:** if a route-specific `afterHandler` is provided, the built-in response payload for that route is not used.
+- **Input:** `{ req, data, result }`
+- **Available route keys:**
+  - `register` (`POST /auth/register`)
+  - `login` (`POST /auth/login`)
+  - `refreshToken` (`POST /auth/refresh-token`)
+  - `revokeRefreshToken` (`POST /auth/refresh-token/revoke`)
+  - `registerSendEmail` (`GET /auth/register/send-email`)
+  - `registerConfirmEmail` (`POST /auth/register/confirm-email`)
+  - `resetPassword` (`GET /auth/reset-password`)
+  - `resetPasswordConfirm` (`POST /auth/reset-password`)
+
+### Hook execution order
+
+For each route, the pipeline is:
+
+1. `beforeHandler.<route>` (if provided)  
+2. Built-in route operation (`passauth.*`)  
+3. `afterHandler.<route>` (if provided), otherwise default response payload
+
+Notes:
+
+- If `beforeHandler.<route>` exists, default validation for that route is fully replaced.
+- If `afterHandler.<route>` exists, default success response for that route is fully replaced.
+- For `POST /auth/login`, if `afterHandler.login` is not defined, `afterLogin` is applied on top of the default login tokens response.
+
+### Hook usage examples
+
+#### 1) Accept custom login payload and map to passauth fields
+
+```ts
+import { z } from "zod";
+
+hooks: {
+  beforeHandler: {
+    login(req) {
+      const payload = z
+        .object({
+          username: z.email(),
+          secret: z.string().min(6),
+        })
+        .parse(req.body);
+
+      return {
+        email: payload.username,
+        password: payload.secret,
+      };
+    },
+  },
+}
+```
+
+#### 2) Customize successful login response
+
+```ts
+hooks: {
+  afterHandler: {
+    login({ data, result }) {
+      return {
+        token: result.accessToken,
+        userEmail: data.email,
+      };
+    },
+  },
+}
+```
+
+#### 3) Keep default login response and enrich with `afterLogin`
+
+```ts
+hooks: {
+  async afterLogin({ email }) {
+    return {
+      profileLoadedFor: email,
+      featureFlags: ["beta-a"],
+    };
+  },
+}
+```
+
+#### 4) Customize email route input and output
+
+```ts
+hooks: {
+  beforeHandler: {
+    registerSendEmail(req) {
+      return { email: String(req.query.mail) };
+    },
+  },
+  afterHandler: {
+    registerSendEmail({ data, result }) {
+      return {
+        delivered: result.success,
+        target: data.email,
+      };
+    },
+  },
+}
+```
 
 ## Built-in routes
 

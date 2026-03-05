@@ -12,6 +12,7 @@ import { Express } from "express";
 import { Sequelize } from "sequelize";
 import { hash } from "passauth/auth/utils";
 import { DEFAULT_JWT_EXPIRATION_MS, DEFAULT_SALTING_ROUNDS } from "passauth";
+import { z } from "zod";
 import { setupApp, UserModel, UserRoleModel } from "../utils/app.utils";
 
 const createAdminUser = async () => {
@@ -461,6 +462,139 @@ describe("Login without email-plugin", () => {
             nickname: "Johndoedoe",
           })
         );
+      });
+    });
+
+    describe("beforeHandler", () => {
+      test("Should replace default register/login validation when custom route hooks are provided", async () => {
+        const { app: appInstance } = await setupApp(false, {
+          hooks: {
+            beforeHandler: {
+              register(req) {
+                const schema = z.object({
+                  username: z.email(),
+                  secret: z.string().min(6).max(100),
+                  nickname: z.string().min(2),
+                });
+
+                const data = schema.parse(req.body);
+
+                return {
+                  email: data.username,
+                  password: data.secret,
+                  nickname: data.nickname,
+                };
+              },
+              login(req) {
+                const schema = z.object({
+                  username: z.email(),
+                  secret: z.string().min(6).max(100),
+                });
+
+                const data = schema.parse(req.body);
+
+                return {
+                  email: data.username,
+                  password: data.secret,
+                };
+              },
+            },
+          },
+        });
+
+        await request(appInstance)
+          .post("/auth/register")
+          .send({
+            username: "custom-shape@example.com",
+            secret: "password",
+            nickname: "john",
+          })
+          .expect(201);
+
+        const response = await request(appInstance)
+          .post("/auth/login")
+          .send({
+            username: "custom-shape@example.com",
+            secret: "password",
+          })
+          .expect(200);
+
+        expect(response.body).toHaveProperty("accessToken");
+        expect(response.body).toHaveProperty("refreshToken");
+      });
+    });
+
+    describe("afterHandler", () => {
+      test("Should replace default login response when custom login afterHandler is provided", async () => {
+        const { app: appInstance } = await setupApp(false, {
+          hooks: {
+            afterHandler: {
+              login({ data, result }) {
+                return {
+                  token: result.accessToken,
+                  userEmail: data.email,
+                };
+              },
+            },
+          },
+        });
+
+        await registerUser(appInstance, {
+          email: "after-handler@example.com",
+          password: "password",
+        });
+
+        const response = await request(appInstance)
+          .post("/auth/login")
+          .send({
+            email: "after-handler@example.com",
+            password: "password",
+          })
+          .expect(200);
+
+        expect(response.body).toEqual(
+          expect.objectContaining({
+            token: expect.any(String),
+            userEmail: "after-handler@example.com",
+          }),
+        );
+        expect(response.body).not.toHaveProperty("refreshToken");
+      });
+
+      test("Should prioritize login afterHandler over afterLogin hook", async () => {
+        const { app: appInstance } = await setupApp(false, {
+          hooks: {
+            async afterLogin() {
+              return {
+                role: "should-not-be-returned",
+              };
+            },
+            afterHandler: {
+              login({ result }) {
+                return {
+                  token: result.accessToken,
+                };
+              },
+            },
+          },
+        });
+
+        await registerUser(appInstance, {
+          email: "after-handler-priority@example.com",
+          password: "password",
+        });
+
+        const response = await request(appInstance)
+          .post("/auth/login")
+          .send({
+            email: "after-handler-priority@example.com",
+            password: "password",
+          })
+          .expect(200);
+
+        expect(response.body).toEqual({
+          token: expect.any(String),
+        });
       });
     });
   });

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Router } from "express";
+import { Request, Router } from "express";
 import { PassauthHandler, PassauthInvalidUserException } from "passauth";
 import {
   LoginValidator,
@@ -23,14 +23,52 @@ export const setupCoreRoutes =
     router: Router
   ) =>
   () => {
+    const runBeforeHandler = async <T>(
+      req: Request,
+      routeHandler: ((req: Request) => Promise<T> | T) | undefined,
+      fallback: () => T,
+    ) => {
+      if (routeHandler) {
+        return routeHandler(req);
+      }
+
+      return fallback();
+    };
+    const runAfterHandler = async <T>(
+      req: Request,
+      routeHandler:
+        | ((params: { req: Request; data: any; result: any }) => Promise<T> | T)
+        | undefined,
+      data: any,
+      result: any,
+      fallback: () => T,
+    ) => {
+      if (routeHandler) {
+        return routeHandler({ req, data, result });
+      }
+
+      return fallback();
+    };
+
     // Register Routes
     router.post("/register", async (req, res) => {
       try {
-        const data = RegisterValidator.parse(req.body);
+        const data = await runBeforeHandler(
+          req,
+          config?.hooks?.beforeHandler?.register,
+          () => RegisterValidator.parse(req.body),
+        );
 
-        await passauth.register(data);
+        const result = await passauth.register(data);
+        const response = await runAfterHandler(
+          req,
+          config?.hooks?.afterHandler?.register,
+          data,
+          result,
+          () => ({ message: "Registration successful" }),
+        );
 
-        res.status(201).json({ message: "Registration successful" });
+        res.status(201).json(response);
       } catch (error) {
         logger.error(error);
         errorHandler(error, res, "Failed to register user");
@@ -40,15 +78,28 @@ export const setupCoreRoutes =
     // Login Routes
     router.post("/login", async (req, res) => {
       try {
-        const data = LoginValidator.parse(req.body);
+        const data = await runBeforeHandler(
+          req,
+          config?.hooks?.beforeHandler?.login,
+          () => LoginValidator.parse(req.body),
+        );
 
-        const result = await passauth.login(data, ["roles"]);
+        const result = await passauth.login(data, { jwtUserFields: ["roles"] });
+        const response = await runAfterHandler(
+          req,
+          config?.hooks?.afterHandler?.login,
+          data,
+          result,
+          async () => {
+            const additionalData = config?.hooks?.afterLogin
+              ? await config.hooks.afterLogin(data)
+              : {};
 
-        const additionalData = config?.hooks?.afterLogin
-          ? await config.hooks.afterLogin({ email: data.email })
-          : {};
+            return { ...result, ...additionalData };
+          },
+        );
 
-        res.json({ ...result, ...additionalData });
+        res.json(response);
       } catch (error) {
         logger.error(error);
         errorHandler(error, res, "Failed to login");
@@ -57,13 +108,25 @@ export const setupCoreRoutes =
 
     router.post("/refresh-token", async (req, res) => {
       try {
-        const { accessToken, refreshToken } = RefreshTokenValidator.parse(
-          req.body,
+        const { accessToken, refreshToken } = await runBeforeHandler(
+          req,
+          config?.hooks?.beforeHandler?.refreshToken,
+          () =>
+            RefreshTokenValidator.parse(
+              req.body,
+            ),
         );
 
         const result = await passauth.refreshToken(accessToken, refreshToken);
+        const response = await runAfterHandler(
+          req,
+          config?.hooks?.afterHandler?.refreshToken,
+          { accessToken, refreshToken },
+          result,
+          () => result,
+        );
 
-        res.json(result);
+        res.json(response);
       } catch (error) {
         logger.error(error);
         errorHandler(error, res, "Failed to refresh access token");
@@ -76,7 +139,11 @@ export const setupCoreRoutes =
       RoleGuard(["admin"]),
       async (req, res) => {
         try {
-          const data = RevokeRefreshTokenValidator.parse(req.body);
+          const data = await runBeforeHandler(
+            req,
+            config?.hooks?.beforeHandler?.revokeRefreshToken,
+            () => RevokeRefreshTokenValidator.parse(req.body),
+          );
 
           const user = await passauth.repo.getUser(data);
 
@@ -88,8 +155,15 @@ export const setupCoreRoutes =
           }
 
           passauth.revokeRefreshToken(user.id);
+          const response = await runAfterHandler(
+            req,
+            config?.hooks?.afterHandler?.revokeRefreshToken,
+            data,
+            user,
+            () => ({ message: "Refresh token revoked" }),
+          );
 
-          res.json({ message: "Refresh token revoked" });
+          res.json(response);
         } catch (error) {
           logger.error(error);
           errorHandler(error, res, "Failed to revoke refresh token");

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import express from "express";
 import Redis from "ioredis";
 import {
@@ -94,7 +95,8 @@ export const setupApp = async (
 
   const passauthRepo = {
     getUser: async (user: Partial<User>) => {
-      const foundUser = await UserModel.findOne({ where: user });
+      const { password, ...userData } = user;
+      const foundUser = await UserModel.findOne({ where: userData});
 
       if (!foundUser) {
         return null;

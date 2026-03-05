@@ -8,7 +8,7 @@ export const setupRoutes = (passauth, withEmailPlugin, config) => () => {
     // Register Routes
     setupCoreRoutes(passauth, config, router)();
     if (withEmailPlugin) {
-        setupEmailRoutes(passauth, router)();
+        setupEmailRoutes(passauth, config, router)();
     }
     return router;
 };
